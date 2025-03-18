@@ -6,6 +6,7 @@ pipeline {
         // ORGANIZATION_NAME
         // DOCKERHUB_USERNAME (it doesn't matter if you don't have one)
 
+
         SERVICE_NAME = "member"
         IMAGE_NAME = "member-miyembro"
         IMAGE_TAG = "${IMAGE_NAME}:${BUILD_NUMBER}"
