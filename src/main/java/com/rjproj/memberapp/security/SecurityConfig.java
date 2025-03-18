@@ -194,7 +194,7 @@ public class SecurityConfig {
             response.setContentType("application/json");
             PrintWriter writer = response.getWriter();
             writer.write(String.format(
-                    "{\"error\": \"%s\", \"message\": \"You must log in to access this resource.\"}",
+                    "{\"error\": \"%s\", \"message\": \"You must log in to access this resource NEW NEW.\"}",
                     ACCESS_DENIED.getMessage()
             ));
             writer.flush();
