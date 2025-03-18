@@ -8,9 +8,9 @@ spring:
     import: optional:configserver:http://localhost:8888
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/member
+    url: jdbc:postgresql://miyembromemberdev.ch2cua0wgb3v.eu-north-1.rds.amazonaws.com:5432/member
     username: arjay
-    password: arjay
+    password: Miyembro24122022
   jpa:
     hibernate:
       ddl-auto: validate
