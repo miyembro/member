@@ -1,5 +1,6 @@
 package com.rjproj.memberapp.service;
 
+import jakarta.annotation.PostConstruct;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -19,7 +20,7 @@ import java.util.UUID;
 @Service
 public class FileService {
 
-    private final S3Client s3Client;
+    private S3Client s3Client;
 
     @Value("${aws.s3.access.key}")
     private String awsS3AccessKey;
@@ -33,7 +34,8 @@ public class FileService {
     @Value("${aws.s3.region}")
     private String region;
 
-    public FileService() {
+    @PostConstruct
+    public void init() {
         // Initialize AWS SDK v2 S3 Client with credentials
         AwsBasicCredentials awsCredentials = AwsBasicCredentials.create(awsS3AccessKey, awsS3SecretKey);
         this.s3Client = S3Client.builder()
@@ -68,6 +70,6 @@ public class FileService {
         if (fileName == null || !fileName.contains(".")) {
             return "jpg";
         }
-        return fileName.substring(fileName.lastIndexOf("."));
+        return fileName.substring(fileName.lastIndexOf(".") + 1);
     }
 }
