@@ -1,11 +1,12 @@
 package com.rjproj.memberapp.service;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.ObjectMetadata;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
+import software.amazon.awssdk.core.sync.RequestBody;
 import com.rjproj.memberapp.model.ImageType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,7 @@ import java.util.UUID;
 @Service
 public class FileService {
 
-    private AmazonS3 amazonS3;
+    private final S3Client s3Client;
 
     @Value("${aws.s3.access.key}")
     private String awsS3AccessKey;
@@ -33,34 +34,36 @@ public class FileService {
     private String region;
 
     public FileService() {
-
+        // Initialize AWS SDK v2 S3 Client with credentials
+        AwsBasicCredentials awsCredentials = AwsBasicCredentials.create(awsS3AccessKey, awsS3SecretKey);
+        this.s3Client = S3Client.builder()
+                .region(Region.of(region))  // Set region from configuration
+                .credentialsProvider(StaticCredentialsProvider.create(awsCredentials))  // Provide credentials
+                .build();
     }
 
     public String uploadImage(String entity, UUID entityId, ImageType imageType, MultipartFile file) throws IOException {
-
-        // Initialize AWS S3 Client
-        BasicAWSCredentials awsCredentials = new BasicAWSCredentials(awsS3AccessKey, awsS3SecretKey);
-        this.amazonS3 = AmazonS3ClientBuilder.standard()
-                .withRegion(Regions.fromName(region))
-                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
-                .build();
-
+        // Get file extension
         String fileExtension = getFileExtension(file.getOriginalFilename());
 
-        String fileKey = entity + "/" + entityId + "/" + entityId + "-" + imageType.getValue() + "."  + fileExtension;
+        // Generate file key for S3 bucket
+        String fileKey = entity + "/" + entityId + "/" + entityId + "-" + imageType.getValue() + "." + fileExtension;
 
         InputStream inputStream = file.getInputStream();
 
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentLength(file.getSize());
+        // Create the PutObjectRequest
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(fileKey)
+                .build();
 
-        // Upload file to S3
-        amazonS3.putObject(bucketName, fileKey, inputStream, metadata);
+        // Upload file to S3 using PutObjectRequest and InputStream wrapped as RequestBody
+        PutObjectResponse response = s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, file.getSize()));
 
         // Return the correct S3 URL
-        return amazonS3.getUrl(bucketName, fileKey).toString();
+        return "https://" + bucketName + ".s3." + region + ".amazonaws.com/" + fileKey;
     }
-    
+
     private String getFileExtension(String fileName) {
         if (fileName == null || !fileName.contains(".")) {
             return "jpg";
@@ -68,4 +71,3 @@ public class FileService {
         return fileName.substring(fileName.lastIndexOf("."));
     }
 }
-

@@ -46,7 +46,8 @@ dependencies {
 
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'com.amazonaws:aws-java-sdk-s3:1.12.734'
+	implementation 'software.amazon.awssdk:s3:2.20.0'  // AWS SDK v2 S3
+	implementation 'software.amazon.awssdk:auth:2.20.0' // AWS SDK v2 Auth
 
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-database-postgresql'

@@ -45,16 +45,19 @@ public class JWTUtil {
 
     public List<String> extractPermissions(String token) {
         Claims claims = extractAllClaims(token);
-        if(claims.get("permissions") != null) {
-            return (List<String>) claims.get("permissions");
-        }
-        return null;
+        Object permissionsClaim = claims.get("permissions");
 
+        // Check if the permissions claim is indeed a List
+        if (permissionsClaim instanceof List) {
+            // Safely cast the permissions
+            return (List<String>) permissionsClaim;
+        }
+        return Collections.emptyList(); // Return an empty list if no permissions are found
     }
 
     public UUID extractSelectedOrganizationId(String token) {
         Claims claims = extractAllClaims(token);
-        if(claims.get("selectedOrganizationId") != null) {
+        if (claims.get("selectedOrganizationId") != null) {
             return UUID.fromString((String) claims.get("selectedOrganizationId"));
         }
         return null;
@@ -84,7 +87,6 @@ public class JWTUtil {
 
     public String generateToken(String username, Role role, List<String> permissions, UUID selectedOrganizationId, UUID memberId) {
         Map<String, Object> claims = new HashMap<>();
-        //claims.put("role", role);
         claims.put("permissions", permissions);
         claims.put("selectedOrganizationId", selectedOrganizationId);
         claims.put("memberId", memberId);
@@ -95,24 +97,24 @@ public class JWTUtil {
         token = Jwts.builder()
                 .claims(claims)
                 .subject(subject)
-                .header().empty().add("typ","JWT")
+                .header().empty().add("typ", "JWT")  // Set JWT header type
                 .and()
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + jwtExpirationTime)) // 5 minutes expiration time
-                .signWith(getSigningKey())
-                .compact();
+                .setIssuedAt(new Date(System.currentTimeMillis()))  // Set issue date
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationTime)) // Set expiration date
+                .signWith(getSigningKey())  // Set signing key
+                .compact();  // Return the compact token string
         return token;
     }
 
     public Boolean validateToken(String token) {
-        return !isTokenExpired(token);
+        return !isTokenExpired(token);  // Validate if token is expired
     }
 
     public void deleteToken() {
-        this.token = null;
+        this.token = null;  // Delete the token by setting it to null
     }
 
     public String getToken() {
-        return token;
+        return token;  // Return the current token
     }
 }
