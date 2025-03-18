@@ -48,11 +48,16 @@ public class JWTUtil {
         Object permissionsClaim = claims.get("permissions");
 
         // Check if the permissions claim is indeed a List
-        if (permissionsClaim instanceof List) {
-            // Safely cast the permissions
-            return (List<String>) permissionsClaim;
+        if (permissionsClaim instanceof List<?>) {
+            // Check if the list contains only strings
+            List<?> permissionsList = (List<?>) permissionsClaim;
+            if (permissionsList.stream().allMatch(item -> item instanceof String)) {
+                @SuppressWarnings("unchecked") // Suppress warning after ensuring type safety
+                List<String> permissions = (List<String>) permissionsList;
+                return permissions;
+            }
         }
-        return Collections.emptyList(); // Return an empty list if no permissions are found
+        return Collections.emptyList(); // Return an empty list if no valid permissions are found
     }
 
     public UUID extractSelectedOrganizationId(String token) {
@@ -97,24 +102,22 @@ public class JWTUtil {
         token = Jwts.builder()
                 .claims(claims)
                 .subject(subject)
-                .header().empty().add("typ", "JWT")  // Set JWT header type
-                .and()
-                .setIssuedAt(new Date(System.currentTimeMillis()))  // Set issue date
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationTime)) // Set expiration date
-                .signWith(getSigningKey())  // Set signing key
-                .compact();  // Return the compact token string
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + jwtExpirationTime))
+                .signWith(getSigningKey())
+                .compact();
         return token;
     }
 
     public Boolean validateToken(String token) {
-        return !isTokenExpired(token);  // Validate if token is expired
+        return !isTokenExpired(token);
     }
 
     public void deleteToken() {
-        this.token = null;  // Delete the token by setting it to null
+        this.token = null;
     }
 
     public String getToken() {
-        return token;  // Return the current token
+        return token;
     }
 }
