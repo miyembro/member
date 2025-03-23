@@ -38,6 +38,5 @@ spec:
     - name: http
       port: 8050
       targetPort: 8050
-      nodePort: 30065
-  type: NodePort
+  type: ClusterIP
 
