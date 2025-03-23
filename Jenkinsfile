@@ -44,11 +44,17 @@ pipeline {
                     // Build the container image using Buildah
                     sh "buildah bud -t ${IMAGE_NAME} ."
 
-                    // Tag the container image for the repository
-                    sh "buildah tag ${IMAGE_NAME} ${REPOSITORY_TAG}"
+                   // Tag the container image for the repository
+                   sh "buildah tag ${IMAGE_NAME} ${REPOSITORY_TAG}"
 
-                    // Push the container image to Docker Hub
-                    sh "buildah push ${REPOSITORY_TAG}"
+                   // Tag the image as 'latest'
+                   sh "buildah tag ${IMAGE_NAME} ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest"
+
+                   // Push the container image to Docker Hub
+                   sh "buildah push ${REPOSITORY_TAG}"
+
+                   // Push the latest tag as well
+                   sh "buildah push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest"
                 }
             }
         }
