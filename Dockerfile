@@ -1,5 +1,5 @@
 # Use an official OpenJDK runtime as a parent image
-FROM openjdk:21-jdk
+FROM docker.io/library/openjdk:21-jdk
 #FROM openjdk:21-jdk-slim
 # Set the working directory in the container
 WORKDIR /app
