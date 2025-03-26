@@ -1,0 +1,97 @@
+pipeline {
+    agent any
+
+    environment {
+        SERVICE_NAME = "member"
+        IMAGE_NAME = "member-miyembro"
+        IMAGE_TAG = "${IMAGE_NAME}:${BUILD_NUMBER}"
+        REPOSITORY_TAG = "${DOCKERHUB_USERNAME}/${IMAGE_TAG}"
+        DOCKER_HUB_CREDS = credentials('miyembro-docker-token')
+        STACK_NAME = "miyembro"
+    }
+
+    stages {
+        stage('Verify Environment') {
+            steps {
+                script {
+                    echo "Checking environment variables..."
+                    echo "ORGANIZATION_NAME: ${env.ORGANIZATION_NAME}"
+                    echo "DOCKERHUB_USERNAME: ${env.DOCKERHUB_USERNAME}"
+
+                    if (!env.ORGANIZATION_NAME?.trim()) {
+                        error("ORGANIZATION_NAME is required but not set")
+                    }
+                    if (!env.DOCKERHUB_USERNAME?.trim()) {
+                        error("DOCKERHUB_USERNAME is required but not set")
+                    }
+                }
+            }
+        }
+
+        stage('Preparation') {
+            steps {
+                deleteDir()  // Replaces cleanWs()
+                git credentialsId: 'GitHub', url: "https://github.com/${ORGANIZATION_NAME}/${SERVICE_NAME}", branch: 'main'
+                sh 'chmod +x gradlew'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh './gradlew clean build'
+            }
+        }
+
+       stage('Build and Push Image') {
+           steps {
+               script {
+                   sh """
+                       docker login -u ${DOCKER_HUB_CREDS_USR} -p ${DOCKER_HUB_CREDS_PSW} docker.io
+                       docker build -t ${IMAGE_NAME} .
+                       docker tag ${IMAGE_NAME} ${REPOSITORY_TAG}
+                       docker tag ${IMAGE_NAME} ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
+                       docker push ${REPOSITORY_TAG}
+                       docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
+                   """
+               }
+           }
+       }
+
+       stage('Deploy Config Server') {
+           steps {
+               script {
+                   // Verify compose file exists
+                   if (!fileExists('docker-compose-member.yml')) {
+                       error("member compose file missing!")
+                   }
+
+                   // Deploy with environment substitution
+                   sh """
+                       docker stack deploy \
+                       --compose-file docker-compose-member.yml \
+                       --with-registry-auth \
+                       ${STACK_NAME}
+                   """
+
+                   // Verify deployment
+                   sh "docker service ls --filter name=${STACK_NAME}_member"
+               }
+           }
+       }
+    }
+
+    post {
+        always {
+            deleteDir()  // Clean workspace after build
+            script {
+                echo "Pipeline completed - result: ${currentBuild.result}"
+            }
+        }
+        success {
+            echo "Pipeline succeeded!"
+        }
+        failure {
+            echo "Pipeline failed!"
+        }
+    }
+}
