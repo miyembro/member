@@ -45,7 +45,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/auth/logout").permitAll()
-
+                        .requestMatchers("/api/v1/members/test").permitAll()
                         //MEMBERSHIPS
                         .requestMatchers(
                             "/api/v1/memberships/current")
