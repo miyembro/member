@@ -22,6 +22,12 @@ public class MemberController {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+
+    @GetMapping(path = "/test")
+    public ResponseEntity<String> test() {
+        return ResponseEntity.ok("Hello World");
+    }
     
     @PostMapping(path = "/{memberId}/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MemberResponse> updateMemberAfterRegistration(
